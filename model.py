@@ -22,7 +22,7 @@ class ChessGameState:
     def getBoard(self):
         return self.board
 
-test = chess.Board()
-model = ChessGameState(test)
-next = model.generateSuccessor(chess.Move.from_uci('a2a3'))
+#test = chess.Board()
+#model = ChessGameState(test)
+#next = model.generateSuccessor(chess.Move.from_uci('a2a3'))
 #print(model.getLegalActions())

@@ -104,6 +104,31 @@ class AlphaBetaAgent(Agent):
         return max(scores)
 
 
-test = ChessGameState()
-agent = AlphaBetaAgent()
-print(agent.getAction(test))
+class QuiescenceAgent(AlphaBetaAgent):
+    def getmax(self, state, depth, alpha, beta):
+        if state.isEnd():
+            return self.evaluationFunction(state)
+        if depth == 0:
+            return self.quiescenceSearch(state, alpha, beta)
+        scores = []
+        for x in state.getLegalActions():
+            succ = state.generateSuccessor(x)
+            v = self.getmin(succ, depth, alpha, beta)
+            if v >= beta:
+                return v
+            alpha = max(alpha, v)
+            scores.append(v)
+        return max(scores)
+
+    def quiescenceSearch(self, state, alpha, beta):
+        captures = filter(state.getBoard().is_capture, state.getLegalActions())
+        bestScore = float('-inf')
+        for move in captures:
+            score = self.quiescenceSearch(state.generateSuccessor(move), alpha, beta)
+            bestScore = max(bestScore, score)
+        return bestScore if captures else self.evaluationFunction(state)
+
+
+#test = ChessGameState()
+#agent = QuiescenceAgent(depth=2)
+#print(agent.getAction(test))
