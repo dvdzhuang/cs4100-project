@@ -7,7 +7,7 @@ class Agent():
         pass
 
 
-def evalFunction(state):
+def evalFunction(state, agentColor):
     values = {
         'p': 1,
         'n': 3,
@@ -22,17 +22,17 @@ def evalFunction(state):
     }
     board = state.getBoard()
     if board.is_checkmate():
-        print('checkmate')
-        print(board.fen)
-        return -999999999999 * colors[board.turn]
+        #print('checkmate')
+        #print(board.fen)
+        return -999999999999 * colors[board.turn == agentColor]
     if board.is_stalemate():
-        print('statemate')
+        #print('statemate')
         return 0
     total = 0
     for sq in chess.SQUARES:
         piece = board.piece_at(sq)
         if piece:
-            piece_color = piece.color
+            piece_color = piece.color == agentColor
             piece_symbol = piece.symbol()
             total += colors[piece_color] * values[piece_symbol.lower()]
     return total
@@ -40,9 +40,10 @@ def evalFunction(state):
 
 class MinimaxAgent(Agent):
 
-    def __init__(self, evalFn=evalFunction, depth=2):
+    def __init__(self, color, evalFn=evalFunction, depth=2):
         self.evaluationFunction = evalFn
         self.depth = depth
+        self.color = color
 
     def getAction(self, gameState):
         return max(gameState.getLegalActions(),
@@ -50,7 +51,7 @@ class MinimaxAgent(Agent):
 
     def getmin(self, state, depth):
         if state.isEnd():
-            return self.evaluationFunction(state)
+            return self.evaluationFunction(state, self.color)
         scores = []
         for x in state.getLegalActions():
             succ = state.generateSuccessor(x)
@@ -59,7 +60,7 @@ class MinimaxAgent(Agent):
 
     def getmax(self, state, depth):
         if depth == 0 or state.isEnd():
-            return self.evaluationFunction(state)
+            return self.evaluationFunction(state, self.color)
         scores = []
         for x in state.getLegalActions():
             succ = state.generateSuccessor(x)
@@ -68,9 +69,10 @@ class MinimaxAgent(Agent):
 
 
 class AlphaBetaAgent(Agent):
-    def __init__(self, evalFn=evalFunction, depth=3):
+    def __init__(self, color, evalFn=evalFunction, depth=2):
         self.evaluationFunction = evalFn
         self.depth = depth
+        self.color = color
 
     def getAction(self, gameState):
         return max(gameState.getLegalActions(),
@@ -79,7 +81,7 @@ class AlphaBetaAgent(Agent):
 
     def getmin(self, state, depth, alpha, beta):
         if state.isEnd():
-            return self.evaluationFunction(state)
+            return self.evaluationFunction(state, self.color)
         scores = []
         for x in state.getLegalActions():
             succ = state.generateSuccessor(x)
@@ -92,7 +94,7 @@ class AlphaBetaAgent(Agent):
 
     def getmax(self, state, depth, alpha, beta):
         if depth == 0 or state.isEnd():
-            return self.evaluationFunction(state)
+            return self.evaluationFunction(state, self.color)
         scores = []
         for x in state.getLegalActions():
             succ = state.generateSuccessor(x)
@@ -107,9 +109,9 @@ class AlphaBetaAgent(Agent):
 class QuiescenceAgent(AlphaBetaAgent):
     def getmax(self, state, depth, alpha, beta):
         if state.isEnd():
-            return self.evaluationFunction(state)
+            return self.evaluationFunction(state, self.color)
         if depth == 0:
-            return self.quiescenceSearch(state, alpha, beta)
+            return self.quiescenceSearch(state, alpha, beta, self.color)
         scores = []
         for x in state.getLegalActions():
             succ = state.generateSuccessor(x)
@@ -120,15 +122,22 @@ class QuiescenceAgent(AlphaBetaAgent):
             scores.append(v)
         return max(scores)
 
-    def quiescenceSearch(self, state, alpha, beta):
+    def quiescenceSearch(self, state, alpha, beta, turn):
+        ourTurn = turn == self.color
         captures = filter(state.getBoard().is_capture, state.getLegalActions())
         bestScore = float('-inf')
+        if not ourTurn:
+            bestScore *= -1
         for move in captures:
-            score = self.quiescenceSearch(state.generateSuccessor(move), alpha, beta)
-            bestScore = max(bestScore, score)
-        return bestScore if captures else self.evaluationFunction(state)
+            score = self.quiescenceSearch(state.generateSuccessor(move), alpha, beta, not turn)
+            bestScore = max(bestScore, score) if ourTurn else min(bestScore, score)
+        return bestScore if captures else self.evaluationFunction(state, self.color)
 
 
 #test = ChessGameState()
-#agent = QuiescenceAgent(depth=2)
-#print(agent.getAction(test))
+#agent = QuiescenceAgent(True, depth=2)
+#agent2 = AlphaBetaAgent(False, depth=2)
+#move1 = agent.getAction(test)
+#print(move1)
+#test = test.generateSuccessor(move1)
+#print(agent2.getAction(test))
