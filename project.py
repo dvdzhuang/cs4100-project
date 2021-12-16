@@ -68,6 +68,45 @@ class MinimaxAgent(Agent):
         return max(scores)
 
 
+class MinimaxDPAgent(Agent):
+
+    def __init__(self, color, evalFn=evalFunction, depth=2):
+        self.evaluationFunction = evalFn
+        self.depth = depth
+        self.color = color
+        self.dp = {}
+
+    def getAction(self, gameState):
+        return max(gameState.getLegalActions(),
+                   key=lambda x: self.getmin(gameState.generateSuccessor(x), self.depth))
+
+    def getmin(self, state, depth):
+        fen = state.getFEN()
+        if (fen, depth) not in self.dp:
+            if state.isEnd():
+                self.dp[fen, depth] = self.evaluationFunction(state, self.color)
+            else:
+                scores = []
+                for x in state.getLegalActions():
+                    succ = state.generateSuccessor(x)
+                    scores.append(self.getmax(succ, depth - 1))
+                self.dp[fen, depth] = min(scores)
+        return self.dp[fen, depth]
+
+    def getmax(self, state, depth):
+        fen = state.getFEN()
+        if (fen, depth) not in self.dp:
+            if depth == 0 or state.isEnd():
+                self.dp[fen, depth] = self.evaluationFunction(state, self.color)
+            else:
+                scores = []
+                for x in state.getLegalActions():
+                    succ = state.generateSuccessor(x)
+                    scores.append(self.getmin(succ, depth))
+                self.dp[fen, depth] = max(scores)
+        return self.dp[fen, depth]
+
+
 class AlphaBetaAgent(Agent):
     def __init__(self, color, evalFn=evalFunction, depth=2):
         self.evaluationFunction = evalFn

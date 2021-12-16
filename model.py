@@ -22,6 +22,9 @@ class ChessGameState:
     def getBoard(self):
         return self.board
 
+    def getFEN(self):
+        return self.board.fen()
+
 #test = chess.Board()
 #model = ChessGameState(test)
 #next = model.generateSuccessor(chess.Move.from_uci('a2a3'))
