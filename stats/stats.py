@@ -6,9 +6,10 @@ f = open(sys.argv[1], 'r')
 times = []
 for _ in range(n):
     times.append(float(f.readline()))
+f.close()
 
 times.sort()
-median = (times[49] + times[50]) / 2
+median = times[n // 2] if n % 2 else (times[n // 2 - 1] + times[n // 2]) / 2
 mean = sum(times) / n
 std = math.sqrt(sum([(x - mean) ** 2 for x in times]) / n)
 minimum = times[0]
