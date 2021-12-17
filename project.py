@@ -150,7 +150,7 @@ class QuiescenceAgent(AlphaBetaAgent):
         if state.isEnd():
             return self.evaluationFunction(state, self.color)
         if depth == 0:
-            return self.quiescenceSearch(state, alpha, beta, self.color)
+            return self.qmax(state, alpha, beta)
         scores = []
         for x in state.getLegalActions():
             succ = state.generateSuccessor(x)
@@ -161,16 +161,31 @@ class QuiescenceAgent(AlphaBetaAgent):
             scores.append(v)
         return max(scores)
 
-    def quiescenceSearch(self, state, alpha, beta, turn):
-        ourTurn = turn == self.color
-        captures = filter(state.getBoard().is_capture, state.getLegalActions())
-        bestScore = float('-inf')
-        if not ourTurn:
-            bestScore *= -1
-        for move in captures:
-            score = self.quiescenceSearch(state.generateSuccessor(move), alpha, beta, not turn)
-            bestScore = max(bestScore, score) if ourTurn else min(bestScore, score)
-        return bestScore if captures else self.evaluationFunction(state, self.color)
+    def qmin(self, state, alpha, beta):
+        if state.isEnd():
+            return self.evaluationFunction(state, self.color)
+        scores = []
+        for x in filter(state.getBoard().is_capture, state.getLegalActions()):
+            succ = state.generateSuccessor(x)
+            v = self.qmax(succ, alpha, beta)
+            if v <= alpha:
+                return v
+            beta = min(beta, v)
+            scores.append(v)
+        return min(scores, default=self.evaluationFunction(state, self.color))
+
+    def qmax(self, state, alpha, beta):
+        if state.isEnd():
+            return self.evaluationFunction(state, self.color)
+        scores = []
+        for x in filter(state.getBoard().is_capture, state.getLegalActions()):
+            succ = state.generateSuccessor(x)
+            v = self.qmin(succ, alpha, beta)
+            if v >= beta:
+                return v
+            alpha = max(alpha, v)
+            scores.append(v)
+        return max(scores, default=self.evaluationFunction(state, self.color))
 
 
 #test = ChessGameState()
